@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ASCII Обои</string>
+    <string name="wallpaper_label">ASCII Live Wallpaper</string>
+    <string name="wallpaper_description">GPU-ускоренные живые обои, превращающие фото, видео и 3D-сцены в поток ASCII-символов в реальном времени.</string>
+</resources>

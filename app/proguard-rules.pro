@@ -1,0 +1,3 @@
+-keep class com.asciilive.wallpaper.service.AsciiWallpaperService { *; }
+-keep class com.asciilive.wallpaper.data.** { *; }
+-dontwarn androidx.media3.**

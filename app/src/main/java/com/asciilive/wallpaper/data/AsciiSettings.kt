@@ -7,9 +7,13 @@ enum class SourceType(val shaderValue: Int, val label: String) {
 }
 
 enum class DemoPreset(val shaderValue: Int, val title: String, val subtitle: String, val tag: String) {
-    DNA_HELIX(0, "ДНК-спираль", "Двойная спираль — бесконечная диагональ", "DNA HELIX"),
-    EVENT_HORIZON(1, "Чёрная дыра", "Аккреционный диск + фотонное кольцо", "EVENT HORIZON"),
-    WIREFRAME_CUBE(2, "Большой куб", "3D-каркас с перспективным вращением", "BIG CUBE")
+    FUSILLI(0, "Макароны", "Две объёмные спиральные фигуры, вращающиеся в противоположных направлениях", "FUSILLI ×2"),
+    FUSILLI_XXL(1, "Макароны XXL", "Гигантские спирали на весь экран — крупный объём и винтовые рёбра", "FUSILLI MAX"),
+    CUBES(2, "Кубы", "Два 3D-каркаса с перспективной проекцией и глубиной рёбер", "CUBES ×2"),
+    CUBES_XXL(3, "Кубы XXL", "Два крупных каркаса на всю высоту экрана с глубиной рёбер", "CUBES MAX"),
+    WIREFRAME_CUBE(4, "Большой куб", "Крупный центральный 3D-куб на фиксированной дистанции", "BIG CUBE ×1"),
+    DNA_HELIX(5, "ДНК-спираль", "Двойная спираль — бесконечная диагональ", "DNA HELIX"),
+    EVENT_HORIZON(6, "Чёрная дыра", "Аккреционный диск + фотонное кольцо", "EVENT HORIZON")
 }
 
 enum class CharsetPreset(val title: String, val chars: String) {

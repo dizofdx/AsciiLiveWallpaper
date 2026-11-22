@@ -32,7 +32,7 @@ uniform vec2 uMediaResolution;
 uniform float uTime;
 
 uniform int uSourceMode;      // 0 = Demo, 1 = Photo, 2 = Video
-uniform int uDemoPreset;      // 0 = DNA Helix, 1 = Event Horizon, 2 = Wireframe Cube
+uniform int uDemoPreset;      // 0 = Fusilli, 1 = Fusilli XXL, 2 = Cubes, 3 = Cubes XXL, 4 = Big Cube, 5 = DNA Helix, 6 = Event Horizon
 uniform int uScaleMode;       // 0 = Fill, 1 = Fit
 uniform float uColumns;
 uniform float uCharCount;
@@ -184,6 +184,118 @@ vec3 demoWireframeCube(vec2 uv, float t) {
     return vec3(0.92, 0.98, 1.0) * lum;
 }
 
+// --- Demo: Twin Fusilli — two volumetric twisted spirals, counter-rotating ---
+float fusilliStrand(vec2 d, float t, float spinDir, float seed,
+                    float R, float halfLen, float grooveFreq, float tilt, vec2 feather) {
+    d = rot2(tilt) * d;
+    // Rounded tips along the strand axis
+    float lenMask = 1.0 - smoothstep(halfLen - feather.y, halfLen, abs(d.y));
+    float body = (1.0 - smoothstep(R - feather.x, R, abs(d.x))) * lenMask;
+    if (body <= 0.002) return 0.0;
+
+    // Visible-angle mapping of a cylinder seen from the side
+    float theta = asin(clamp(d.x / R, -1.0, 1.0));
+    // Helical groove phase: diagonal ridges that screw around the axis over time
+    float groovePhase = theta + d.y * grooveFreq + t * spinDir + seed;
+    float groove = pow(0.5 + 0.5 * cos(groovePhase), 3.0);
+    // Cylinder lambert shading with light from the upper-left
+    float lambert = clamp(0.45 + 0.55 * cos(theta - 2.4), 0.0, 1.0);
+    // Ridge bulges brighten the silhouette like volumetric pasta ridges
+    float bulge = groove * smoothstep(0.55, 1.0, abs(d.x) / R);
+    return body * (0.20 + 0.55 * lambert * (0.35 + 0.65 * groove) + 0.85 * bulge);
+}
+
+vec3 demoFusilliPair(vec2 uv, float t,
+                     float R, float halfLen, float grooveFreq,
+                     float tilt, float rot, float offScale, float offBase, vec2 feather) {
+    float aspect = uResolution.x / max(uResolution.y, 1.0);
+    vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
+    vec2 q = rot2(rot) * p;
+    float off = offScale * aspect + offBase;
+    float sway = 0.02 * sin(t * 0.9);
+    float lum =
+        fusilliStrand(q - vec2(-off, sway), t,  1.6, 0.0, R, halfLen, grooveFreq, tilt, feather) +
+        fusilliStrand(q - vec2( off, -sway), t, -1.6, 1.9, R, halfLen, grooveFreq, tilt, feather);
+    lum = clamp(lum, 0.0, 1.0);
+    return vec3(0.94, 0.95, 1.0) * lum;
+}
+
+// Compact pair laid out along a diagonal, clearly separated
+vec3 demoFusilli(vec2 uv, float t) {
+    return demoFusilliPair(uv, t, 0.10, 0.30, 13.0, 0.55, 0.40, 0.20, 0.05, vec2(0.030, 0.12));
+}
+
+// Giant diagonal spirals filling the screen
+vec3 demoFusilliMax(vec2 uv, float t) {
+    return demoFusilliPair(uv, t, 0.115, 0.60, 9.0, 0.0, 0.35, 0.31, 0.0, vec2(0.035, 0.14));
+}
+
+// --- Demo: Twin Cubes — perspective wireframes with depth-shaded edges ---
+vec3 cubeVert(vec3 v, float ax, float ay, float az) {
+    v.xz = rot2(ay) * v.xz;
+    v.yz = rot2(ax) * v.yz;
+    v.xy = rot2(az) * v.xy;
+    float z = v.z + 3.1;
+    return vec3(v.xy / max(z, 0.5) * 1.15, z);
+}
+
+float edgeDepthLum(vec2 p, vec3 a, vec3 b) {
+    float d = sdSegment(p, a.xy, b.xy);
+    float edge = 1.0 - smoothstep(0.004, 0.020, d);
+    // Near edges render bright, far edges dim — per-edge depth cue
+    float near = clamp((3.1 - (a.z + b.z) * 0.5) * 1.6, 0.0, 1.0);
+    return edge * mix(0.28, 1.0, near) + exp(-d * 16.0) * 0.10;
+}
+
+float cubeWire(vec2 q, float s, float ax, float ay, float az) {
+    vec3 a = cubeVert(vec3(-s, -s, -s), ax, ay, az);
+    vec3 b = cubeVert(vec3( s, -s, -s), ax, ay, az);
+    vec3 c = cubeVert(vec3( s,  s, -s), ax, ay, az);
+    vec3 d = cubeVert(vec3(-s,  s, -s), ax, ay, az);
+    vec3 e = cubeVert(vec3(-s, -s,  s), ax, ay, az);
+    vec3 f = cubeVert(vec3( s, -s,  s), ax, ay, az);
+    vec3 g = cubeVert(vec3( s,  s,  s), ax, ay, az);
+    vec3 h = cubeVert(vec3(-s,  s,  s), ax, ay, az);
+
+    float lum = 0.0;
+    lum += edgeDepthLum(q, a, b);
+    lum += edgeDepthLum(q, b, c);
+    lum += edgeDepthLum(q, c, d);
+    lum += edgeDepthLum(q, d, a);
+    lum += edgeDepthLum(q, e, f);
+    lum += edgeDepthLum(q, f, g);
+    lum += edgeDepthLum(q, g, h);
+    lum += edgeDepthLum(q, h, e);
+    lum += edgeDepthLum(q, a, e);
+    lum += edgeDepthLum(q, b, f);
+    lum += edgeDepthLum(q, c, g);
+    lum += edgeDepthLum(q, d, h);
+    return lum;
+}
+
+vec3 demoCubesPair(vec2 uv, float t, float s, float sepX, float sepY) {
+    float aspect = uResolution.x / max(uResolution.y, 1.0);
+    vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
+    vec2 cA = vec2(-sepX * aspect,  sepY);
+    vec2 cB = vec2( sepX * aspect, -sepY);
+    // The pair counter-rotates
+    float lum =
+        cubeWire(p - cA, s,  t * 0.55,  t * 0.80,  t * 0.30) +
+        cubeWire(p - cB, s, -t * 0.50, -t * 0.72, -t * 0.26);
+    lum = clamp(lum, 0.0, 1.0);
+    return vec3(0.92, 0.98, 1.0) * lum;
+}
+
+// Compact pair, clearly separated like the reference
+vec3 demoCubes(vec2 uv, float t) {
+    return demoCubesPair(uv, t, 0.16, 0.17, 0.21);
+}
+
+// Giant pair spanning most of the screen height
+vec3 demoCubesMax(vec2 uv, float t) {
+    return demoCubesPair(uv, t, 0.27, 0.15, 0.17);
+}
+
 // --- Aspect-ratio UV mapping for Photo / Video ---
 bool mapMediaUv(vec2 uv, out vec2 mapped) {
     float screenAspect = uResolution.x / max(uResolution.y, 1.0);
@@ -211,8 +323,13 @@ bool mapMediaUv(vec2 uv, out vec2 mapped) {
 
 vec3 sampleSource(vec2 uv) {
     if (uSourceMode == 0) {
-        if (uDemoPreset == 1) return demoEventHorizon(uv, uTime);
-        if (uDemoPreset == 2) return demoWireframeCube(uv, uTime);
+        if (uDemoPreset == 0) return demoFusilli(uv, uTime);
+        if (uDemoPreset == 1) return demoFusilliMax(uv, uTime);
+        if (uDemoPreset == 2) return demoCubes(uv, uTime);
+        if (uDemoPreset == 3) return demoCubesMax(uv, uTime);
+        if (uDemoPreset == 4) return demoWireframeCube(uv, uTime);
+        if (uDemoPreset == 5) return demoDnaHelix(uv, uTime);
+        if (uDemoPreset == 6) return demoEventHorizon(uv, uTime);
         return demoDnaHelix(uv, uTime);
     }
 

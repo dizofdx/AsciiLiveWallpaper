@@ -8,8 +8,3 @@
 - **AndroidX Media3 (ExoPlayer)** -> `SurfaceTexture` (`GL_OES_EGL_image_external_essl3`) без копирования Bitmap на CPU
 - **Jetpack DataStore (Preferences)** + `StateFlow` — мгновенное применение настроек в сервисе обоев без перезапуска
 - **minSdk 26 / targetSdk 35**
-
-## Сборка
-1. Откройте папку `AsciiLiveWallpaper` в **Android Studio (Meerkat / Ladybug или новее)** с JDK 17.
-2. Дождитесь синхронизации Gradle.
-3. Запустите конфигурацию `app` на физическом устройстве Android 8.0+ (рекомендуется реальный смартфон с поддержкой OpenGL ES 3.0 для оценки 60–120 FPS и тактильного отклика).

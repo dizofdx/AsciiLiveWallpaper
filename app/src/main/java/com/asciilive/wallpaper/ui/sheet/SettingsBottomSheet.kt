@@ -261,9 +261,13 @@ private fun AsciiTabContent(
     }
 
     if (settings.charsetPreset == CharsetPreset.CUSTOM) {
+        // Keep the field state local: pushing every keystroke through the
+        // DataStore roundtrip loses characters while typing fast.
+        var customText by rememberSaveable { mutableStateOf(settings.customCharset) }
         OutlinedTextField(
-            value = settings.customCharset,
+            value = customText,
             onValueChange = { text ->
+                customText = text
                 onUpdate { it.copy(customCharset = text) }
             },
             label = { Text("От тёмного к светлому (минимум 2 символа)") },

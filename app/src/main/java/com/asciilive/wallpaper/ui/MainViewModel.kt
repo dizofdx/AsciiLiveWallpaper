@@ -52,8 +52,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         runCatching {
             resolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        val mimeType = resolver.getType(uri).orEmpty()
-        val sourceType = if (mimeType.startsWith("video/")) SourceType.VIDEO else SourceType.IMAGE
+        val sourceType = if (isVideoUri(resolver, uri)) SourceType.VIDEO else SourceType.IMAGE
         viewModelScope.launch {
             repository.update {
                 it.copy(
@@ -62,6 +61,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
         }
+    }
+
+    /**
+     * Some devices return a null MIME type for picked media (MOV/MKV and certain
+     * picker providers), which would silently turn a video into a frozen "photo".
+     * Fall back to the file extension before assuming it is an image.
+     */
+    private fun isVideoUri(resolver: android.content.ContentResolver, uri: Uri): Boolean {
+        val mimeType = runCatching { resolver.getType(uri) }.getOrNull()
+        if (mimeType?.startsWith("video/") == true) return true
+        val path = runCatching { uri.path?.lowercase() }.getOrNull().orEmpty()
+        return VIDEO_EXTENSIONS.any(path::endsWith)
+    }
+
+    private companion object {
+        val VIDEO_EXTENSIONS = listOf(".mp4", ".mov", ".webm", ".mkv", ".3gp", ".m4v", ".avi")
     }
 
     fun cycleDemoPreset() {

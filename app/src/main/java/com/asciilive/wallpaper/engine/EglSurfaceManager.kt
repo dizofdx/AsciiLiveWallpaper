@@ -101,7 +101,9 @@ class EglSurfaceManager {
             if (eglContext != EGL14.EGL_NO_CONTEXT) {
                 EGL14.eglDestroyContext(eglDisplay, eglContext)
             }
-            EGL14.eglTerminate(eglDisplay)
+            // NOTE: never call eglTerminate on EGL_DEFAULT_DISPLAY — the display
+            // is process-wide and terminating it would also invalidate EGL
+            // resources owned by other components (e.g. the in-app preview).
         }
         eglDisplay = EGL14.EGL_NO_DISPLAY
         eglContext = EGL14.EGL_NO_CONTEXT

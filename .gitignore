@@ -14,6 +14,7 @@ local.properties
 *.iml
 .cxx/
 .externalNativeBuild/
+.kotlin/
 
 # OS & Logs
 .DS_Store
